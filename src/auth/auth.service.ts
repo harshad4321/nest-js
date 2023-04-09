@@ -12,6 +12,7 @@ export class AuthService {
 
   async signup(dto: AuthDto) {
     const hash = await argon.hash(dto.password);
+    //for the password hashing   -> argon2 isused(in bcrypt is ony possible to hash first 72byte so)
     try {
       const user = await this.prisma.user.create({
         data: { email: dto.email, hash },
