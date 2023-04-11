@@ -7,9 +7,8 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto';
 import * as argon from 'argon2';
-import { Config } from 'prettier';
 import { ConfigService } from '@nestjs/config';
-import { promises } from 'dns';
+
 
 @Injectable()
 export class AuthService {
