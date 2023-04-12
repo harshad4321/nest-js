@@ -1,12 +1,14 @@
-import { IsString } from 'class-validator';
-import { JwtService } from '@nestjs/jwt';
 import {
-  BadRequestException,
+
+    BadRequestException,
+  Get,
   Injectable,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto';
 import * as argon from 'argon2';
+// import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 
@@ -18,9 +20,15 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
+getHello():string{
+  return 'hello '
+}
+
   async signup(dto: AuthDto) {
+    // generate the password hash
     const hash = await argon.hash(dto.password);
     //for the password hashing   -> argon2 isused(in bcrypt is ony possible to hash first 72byte so)
+        // save the new user in the db
     try {
       const user = await this.prisma.user.create({
         data: {
@@ -28,7 +36,7 @@ export class AuthService {
           hash,
         },
       });
-
+    
       return this.signToken(user.id, user.email);
     } catch (error) {
       if (error.code === 'P2002') {
@@ -40,28 +48,36 @@ export class AuthService {
     }
   }
 
+
   async signin(dto: AuthDto) {
+    // find the user by email
     const user =
       await this.prisma.user.findUnique({
-        where: { email: dto.email },
+        where: { 
+          email: dto.email ,
+          
+        },
       });
+       // if user does not exist throw exception
     if (!user) {
       throw new BadRequestException(
-        'Incorrect credentials',
+        'please signup first ...',
       );
     }
+     // compare password
     const pwMatches = await argon.verify(
       user.hash,
       dto.password,
     );
+     // if password incorrect throw exception
     if (!pwMatches) {
       throw new BadRequestException(
-        'Incorrect credentials',
+        'password incorrect ...',
       );
     }
-    return this.signToken(user.id, user.email);
+    
   }
-  signToken(
+  async signToken(
     userId: number,
     email: string,
   ): Promise<{ access_token: string }> {
@@ -70,11 +86,12 @@ export class AuthService {
       email,
     };
     const secret = this.config.get('JWT_SECRET');
-    return this.Jwt.signAsync(payload, {
+        const token = await this.Jwt.signAsync(payload, {
       expiresIn: '15m',
-      secret,
-    }).then(async (token) => ({
-      access_token: token,
-    }));
+     secret: secret,
+    })
+    return {
+      access_token: token
+    };
   }
 }

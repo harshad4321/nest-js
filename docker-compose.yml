@@ -11,6 +11,18 @@ services:
       POSTGRES_DB: "my_database_name"
     networks:
       - student
+      
+  test-db:
+    image: postgres:13
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: "my_database_name"
+    networks:
+      - student
+
 
 networks:
  student : 
